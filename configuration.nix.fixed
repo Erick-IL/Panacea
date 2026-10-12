@@ -1,0 +1,251 @@
+# Edit this configuration file to define what should be installed on
+# your system.  Help is available in the configuration.nix(5) man page
+# and in the NixOS manual (accessible by running ‘nixos-help’).
+
+{ config, pkgs, ... }:
+
+{
+  imports =
+    [ # Include the results of the hardware scan.
+      ./hardware-configuration.nix
+      ./desktop-entries.nix
+    
+      ./panacea.nix
+    ];
+
+  # Bootloader.
+  boot.loader.systemd-boot.enable = true;
+  boot.loader.efi.canTouchEfiVariables = true;
+
+  networking = {
+    networkmanager.enable = false;
+    wireless.enable = false;
+    wireless.iwd.enable = true;
+  };
+
+  # Set your time zone.
+  time.timeZone = "America/Sao_Paulo";
+
+  # Select internationalisation properties.
+  i18n.defaultLocale = "pt_BR.UTF-8";
+
+  i18n.extraLocaleSettings = {
+    LC_ADDRESS = "pt_BR.UTF-8";
+    LC_IDENTIFICATION = "pt_BR.UTF-8";
+    LC_MEASUREMENT = "pt_BR.UTF-8";
+    LC_MONETARY = "pt_BR.UTF-8";
+    LC_NAME = "pt_BR.UTF-8";
+    LC_NUMERIC = "pt_BR.UTF-8";
+    LC_PAPER = "pt_BR.UTF-8";
+    LC_TELEPHONE = "pt_BR.UTF-8";
+    LC_TIME = "pt_BR.UTF-8";
+  };
+
+  # Enable the X11 windowing system.
+  services.xserver.enable = true;
+  
+  # hyprland
+  programs.hyprland = {
+    enable = true;
+    xwayland.enable = true;
+  };
+
+  xdg.portal = {
+    enable = true;
+    extraPortals = [ pkgs.xdg-desktop-portal-hyprland ];
+  };
+
+  # Configure keymap in X11
+  services.xserver.xkb = {
+    layout = "br";
+    variant = "";
+  };
+
+  services.displayManager.sddm.enable = true;
+  
+  # Configure console keymap
+  console.keyMap = "br-abnt2";
+
+  # Enable CUPS to print documents.
+  services.printing.enable = true;
+
+  # Enable sound with pipewire.
+  services.pulseaudio.enable = false;
+  security.rtkit.enable = true;
+  services.pipewire = {
+    enable = true;
+    alsa.enable = true;
+    alsa.support32Bit = true;
+    pulse.enable = true;
+  };
+
+  # Define a user account. Don't forget to set a password with ‘passwd’.
+  users.users."levandoski" = {
+    isNormalUser = true;
+    description = "levandoski";
+    extraGroups = [ "networkmanager" "wheel" "i2c" "docker" ];
+    packages = with pkgs; [
+    ];
+  };
+
+  # Install firefox.
+  programs.firefox.enable = true;
+
+  # Steam config
+  programs.steam = {
+    enable = true;
+    remotePlay.openFirewall = true;
+    dedicatedServer.openFirewall = true;
+  };
+
+  programs.gamemode.enable = true;
+
+  # List packages installed in system profile.
+  nixpkgs.config.allowUnfree = true;  
+
+  environment.systemPackages = with pkgs; [
+    # Com and Media
+
+
+    discord
+    spotify
+
+    bibata-cursors
+
+    hyprland
+    quickshell       
+    foot
+    fish
+    eza
+    zoxide
+    hyprpaper
+    hyprsunset
+    cliphist
+    wf-recorder
+    cava
+    brightnessctl
+    iwd
+    qt6.qtmultimedia
+    qt6.qtdeclarative
+
+    kitty
+    git
+    
+    vscode
+    modrinth-app
+    steam-run
+    pavucontrol
+    nerd-fonts.jetbrains-mono  
+
+    # Panacea dependencies
+    bat
+    fastfetch
+    yazi
+    swaylock
+    jq
+    wl-clipboard
+    grim
+    slurp
+    ffmpeg
+    wtype
+    ddcutil
+    playerctl
+    wireplumber
+    python3
+    openssl
+    xdg-utils
+    glib
+    upower
+    mpvpaper
+    papirus-icon-theme
+    udisks2
+    udiskie
+    gvfs
+    qt6.qtsvg
+    python3Packages.secretstorage
+    python3Packages.cryptography
+  ];
+
+  environment.sessionVariables = {
+    # On hybrid GPU systems (Intel + NVIDIA PRIME Offload), we should NOT
+
+
+    # set __GLX_VENDOR_LIBRARY_NAME = "nvidia" or GBM_BACKEND = "nvidia-drm"
+
+    # globally, as this forces all X11/GLX/Wayland applications to use
+
+
+    # the NVIDIA driver on the Intel primary display, breaking SDDM and other applications.
+
+
+    # To run games/apps on NVIDIA, use `nvidia-offload` / `prime-run`.
+
+    QML2_IMPORT_PATH = "/run/current-system/sw/lib/qt-6/qml";
+  };
+
+  programs.nix-ld.enable = true;
+  programs.nix-ld.libraries = with pkgs; [
+  ];
+
+  system.stateVersion = "26.05";
+
+  # 1. Enable NVIDIA proprietary drivers
+
+
+  services.xserver.videoDrivers = [ "nvidia" ];
+
+  # 2. NVIDIA Specific Settings (PRIME Offload)
+
+
+  hardware.nvidia = {
+    modesetting.enable = true;
+
+    powerManagement.enable = false;
+    powerManagement.finegrained = false;
+
+    open = false;
+    nvidiaSettings = true;
+    package = config.boot.kernelPackages.nvidiaPackages.stable;
+
+    # PRIME Sync: NVIDIA RTX 3050 GPU acts as the main rendering card,
+
+
+    # sending the output to the notebook screen managed by the Intel bus.
+
+
+    prime = {
+      sync.enable = true;
+
+      intelBusId = "PCI:0:2:0";
+      nvidiaBusId = "PCI:1:0:0";
+    };
+  };
+
+  # 3. Graphics/OpenGL support
+
+
+  hardware.graphics = {
+    enable = true;
+    enable32Bit = true;
+  };
+
+  # PAM profile for swaylock & Panacea password vault
+  security.pam.services.swaylock = {};
+  services.power-profiles-daemon.enable = true;
+  services.upower.enable = true;
+  hardware.bluetooth.enable = true;
+  hardware.i2c.enable = true;
+  programs.fish.enable = true;
+
+  # Panacea shared directory for wallpaper & SDDM sync
+  systemd.tmpfiles.rules = [
+    "d /var/lib/panacea 0777 root root -"
+  ];
+
+  fonts.packages = with pkgs; [
+    nerd-fonts.jetbrains-mono
+    noto-fonts
+    noto-fonts-color-emoji
+    noto-fonts-cjk-sans
+  ];
+}
